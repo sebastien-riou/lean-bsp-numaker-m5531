@@ -1,0 +1,34 @@
+[bsp]
+name = "numaker-m5531"
+lean_bsp_contract_version = "1.0"
+version = "0.1.0"
+description = "Nuvoton NuMaker-M5531 board (M5531H2LJAE, Cortex-M55)"
+maintainer = "sebastien.riou@pqshield.com"
+entry_point = "bsp_cli.py"
+
+[bsp.hardware]
+flash_bytes = 0x200000
+ram_bytes = 0x150000                 # SRAM; plus 128 KiB DTCM (the stack) and 64 KiB ITCM
+
+[bsp.build]
+backend = "custom"                   # bsp_cli.py drives the compiler; CROSS_COMPILE selects it
+requires_tools = ["arm-none-eabi-gcc", "hwbridge"]
+
+[bsp.primitives]
+uart = true                          # UART 0 is UART0, the Nu-Link2-Me's VCOM
+led = true                           # 0 red, 1 yellow, 2 green
+button = true                        # 0 BTN_0, 1 BTN_1
+cpu_cycle_counter = true             # DWT CYCCNT
+cpu_frequency = true
+cache_clear = true                   # the core's L1 I- and D-caches
+heap_usage = true
+flash_read = false
+flash_erase = false
+flash_write = false
+
+[[bsp.targets]]
+name = "cortex-m55"
+cpu = "cortex-m55"
+toolchain = "arm-none-eabi"
+cflags = ["-mcpu=cortex-m55", "-mthumb", "-mfpu=fpv5-sp-d16", "-mfloat-abi=softfp"]
+run_mode = "auto-after-load"
