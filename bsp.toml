@@ -1,6 +1,6 @@
 [bsp]
 name = "numaker-m5531"
-lean_bsp_contract_version = "1.0"
+lean_bsp_contract_version = "1.1"
 version = "0.1.0"
 description = "Nuvoton NuMaker-M5531 board (M5531H2LJAE, Cortex-M55)"
 maintainer = "sebastien.riou@pqshield.com"
