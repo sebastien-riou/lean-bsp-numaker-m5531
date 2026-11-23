@@ -1,13 +1,13 @@
 [bsp]
 name = "numaker-m5531"
-lean_bsp_contract_version = "1.1"
+lean_bsp_contract_version = "1.2"
 version = "0.1.0"
 description = "Nuvoton NuMaker-M5531 board (M5531H2LJAE, Cortex-M55)"
 maintainer = "sebastien.riou@pqshield.com"
 entry_point = "bsp_cli.py"
 
 [bsp.hardware]
-flash_bytes = 0x200000
+flash_bytes = 0x100000               # APROM bank 0; bank 1 is NVM region 0
 ram_bytes = 0x150000                 # SRAM; plus 128 KiB DTCM (the stack) and 64 KiB ITCM
 
 [bsp.build]
@@ -22,9 +22,17 @@ cpu_cycle_counter = true             # DWT CYCCNT
 cpu_frequency = true
 cache_clear = true                   # the core's L1 I- and D-caches
 heap_usage = true
-flash_read = false
-flash_erase = false
-flash_write = false
+flash_read = true                    # NVM region 0, APROM bank 1
+flash_erase = true
+flash_write = true
+
+[[bsp.nvm_regions]]
+name = "aprom-bank1"                 # never loaded: the image stays in bank 0
+base = 0x00200000
+size = 0x100000
+page_size = 8192
+write_size = 8                       # one 64-bit program per unit
+zero_overwrite = false               # not documented for the M5531
 
 [[bsp.targets]]
 name = "cortex-m55"

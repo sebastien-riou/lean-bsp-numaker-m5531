@@ -32,7 +32,7 @@ lbsp build-load-run --bsp numaker-m5531 --until 'hello-world done' --timeout 60
 | `app_tick` | from `SysTick_Handler`, every millisecond |
 | `app_on_fault` | from the HardFault handler, with the faulting `pc` |
 | `app_on_exit` | default does nothing: `main()` then parks the CPU |
-| Flash/NVM | not yet |
+| Flash/NVM | region 0, `aprom-bank1`: APROM bank 1 (0x00200000, 1 MiB), 8 KiB pages, 8-byte write unit (one 64-bit program per unit), no zero overwrite (the reference manual neither allows nor refuses programming a programmed word). The image must fit bank 0, the lower 1 MiB (the link checks it). Through the FMC's registers, without the pack driver's time-outs: a write refuses a destination that does not read erased, programs the units in ascending order and reads back; an erase verifies its pages read erased; each command clears the controller's fail flag first and reports it as its own status; the data cache is invalidated over what each command changed |
 
 ### The cycle counter and the debugger
 
@@ -59,6 +59,10 @@ unchanged from the device pack crypto-benchmark-m5531 uses (NuMicroM55_DFP 3.1.4
 - `RTE/`: the startup code, `system_M5531.c` and the linker script `M5531.ld`, as csolution placed
   them. `bsp_cli.py` sets the stack (64 KiB, in DTCM) and the heap (64 KiB, in SRAM) with
   `--defsym`.
+- `linker/default.ld`: the pack's `M5531.ld`, included unchanged, plus NVM region 0 (`NVM0`, where the
+  sections named `.bsp_nvm0` go, loading nothing there) and the check that the image stays below it. An
+  application needing its own script ends it with `INCLUDE default.ld`, as on every board.
+- `src/bsp_nvm.c`: NVM region 0, on the FMC's registers (`Library/.../fmc_reg.h`, `fmc.h`).
 - `Library/`: the device headers, the StdDriver headers, and the four StdDriver sources the BSP uses
   (clk, sys, uart, gpio), with Nuvoton's licence.
 - `CMSIS/`: CMSIS Core headers, with Arm's licence.
