@@ -28,8 +28,23 @@
 #include "bsp_api.h"
 #include "bsp_nvm.h"
 
-#define NVM0_BASE       FMC_APROM_BANK1_BASE
-#define NVM0_SIZE       FMC_APROM_BANK_SIZE
+/* The bounds can be given at build time, BSP_NVM0_BASE and BSP_NVM0_SIZE, by a build that takes
+ * these accessors without the BSP around them (a prebuilt library for this part that offers the
+ * whole flash, for instance). A lean-bsp build defines neither: the region is APROM bank 1, as
+ * bsp.toml and the linker script say. Bank 0 is where the code runs: nothing here was written or
+ * tested for programming it. */
+#if defined(BSP_NVM0_BASE) != defined(BSP_NVM0_SIZE)
+#error "define both BSP_NVM0_BASE and BSP_NVM0_SIZE, or neither"
+#endif
+#ifdef BSP_NVM0_BASE
+#define NVM0_BASE  BSP_NVM0_BASE
+#define NVM0_SIZE  BSP_NVM0_SIZE
+#define NVM0_NAME  "build-time-bounds"
+#else
+#define NVM0_BASE  FMC_APROM_BANK1_BASE
+#define NVM0_SIZE  FMC_APROM_BANK_SIZE
+#define NVM0_NAME  "aprom-bank1"
+#endif
 #define PAGE_SIZE       FMC_FLASH_PAGE_SIZE
 #define NVM0_WRITE_SIZE BSP_NVM0_WRITE_SIZE /* bsp_nvm.h */
 
@@ -120,7 +135,7 @@ static uint8_t nvm0_read(void *dst, const void *src, uintptr_t size) {
 
 const bsp_nvm_region_t bsp_nvm_regions[BSP_N_NVM_REGIONS] = {
     {
-        .name = "aprom-bank1",
+        .name = NVM0_NAME,
         .base_address = (void *)NVM0_BASE,
         .size = NVM0_SIZE,
         .page_size = PAGE_SIZE,
