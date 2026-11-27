@@ -38,15 +38,17 @@ INCLUDE_DIRS = [
     ROOT / 'CMSIS' / 'Core' / 'Include',
 ]
 DEFINES = []
-STACK_SIZE = 0x10000  # at the top of DTCM (128 KiB)
-HEAP_SIZE = 0x10000   # in SRAM; the pack's 2 KiB default is short once newlib-nano allocates stdout's buffer
+STACK_SIZE = 0x1F000  # 124 KiB at the top of DTCM (128 KiB), as crypto-benchmark-m5531 has it; MSPLIM stops it, and
+                      # linker/default.ld checks it leaves the data in DTCM (the 712-byte vector table) alone
+HEAP_SIZE = 0x10000   # reserved in SRAM; the heap then grows to the end of the SRAM region (linker/default.ld)
 
 
 def build(app: dict, target, bdir: Path) -> dict:
     return gcc.build(app, target, bdir, root=ROOT, sources=SOURCES, include_dirs=INCLUDE_DIRS, defines=DEFINES,
                      linker_script=ROOT / 'linker' / 'default.ld',  # the pack's M5531.ld plus NVM region 0
                      link_flags=[f'-L{ROOT / "linker"}', f'-L{DEVICE}',
-                                 f'-Wl,--defsym=STACK_SIZE={STACK_SIZE:#x}', f'-Wl,--defsym=HEAP_SIZE={HEAP_SIZE:#x}'])
+                                 f'-Wl,--defsym=STACK_SIZE={STACK_SIZE:#x}', f'-Wl,--defsym=HEAP_SIZE={HEAP_SIZE:#x}',
+                                 *gcc.HEAP_WRAP_FLAGS])
 
 
 BOARD = board.Board(

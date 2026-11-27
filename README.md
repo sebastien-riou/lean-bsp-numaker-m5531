@@ -27,7 +27,7 @@ lbsp build-load-run --bsp numaker-m5531 --until 'hello-world done' --timeout 60
 | Cycle counter, CPU frequency | DWT `CYCCNT`, at `SystemCoreClock`; see below for what debuggers do to it |
 | Delay | busy wait on SysTick's counter: works with interrupts masked, and whatever a debugger did to the DWT |
 | Cache clear | the core's L1 caches: D-cache cleaned and invalidated, I-cache invalidated |
-| Heap usage | growth of the heap end since the last reset, tracked in `_sbrk` |
+| Heap usage | lean-bsp's heap counter (contract 1.4), `src/bsp_heap.c`: the bytes requested from `malloc`, `calloc` and `realloc` and not freed yet, at most since the last reset. The heap itself is newlib's, grown by `_sbrk` from the end of the data to the end of the SRAM region (0x20230000) |
 | Reset | `NVIC_SystemReset()`, once the UART sent its last byte |
 | `app_tick` | from `SysTick_Handler`, every millisecond |
 | `app_on_fault` | from the HardFault handler, with the faulting `pc` |
@@ -57,10 +57,12 @@ There is no generated project: `src/bsp_numaker_m5531.c` brings the board up as
 unchanged from the device pack crypto-benchmark-m5531 uses (NuMicroM55_DFP 3.1.4-rc.3, CMSIS 6.3.0):
 
 - `RTE/`: the startup code, `system_M5531.c` and the linker script `M5531.ld`, as csolution placed
-  them. `bsp_cli.py` sets the stack (64 KiB, in DTCM) and the heap (64 KiB, in SRAM) with
-  `--defsym`.
+  them. `bsp_cli.py` sets the stack (124 KiB, at the top of DTCM, where MSPLIM stops it) and the heap's
+  reserve (64 KiB, in SRAM) with `--defsym`; the heap then grows to the end of the SRAM region.
 - `linker/default.ld`: the pack's `M5531.ld`, included unchanged, plus NVM region 0 (`NVM0`, where the
-  sections named `.bsp_nvm0` go, loading nothing there) and the check that the image stays below it. An
+  sections named `.bsp_nvm0` go, loading nothing there) and the check that the image stays below it, the
+  heap's limit (`__lean_bsp_heap_limit`, the end of the SRAM region) and the check that the stack leaves
+  the data in DTCM alone. An
   application needing its own script ends it with `INCLUDE default.ld`, as on every board.
 - `src/bsp_nvm.c`: NVM region 0, on the FMC's registers (`Library/.../fmc_reg.h`, `fmc.h`).
 - `Library/`: the device headers, the StdDriver headers, and the four StdDriver sources the BSP uses

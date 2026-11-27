@@ -1,6 +1,6 @@
 [bsp]
 name = "numaker-m5531"
-lean_bsp_contract_version = "1.2"
+lean_bsp_contract_version = "1.5"
 version = "0.1.0"
 description = "Nuvoton NuMaker-M5531 board (M5531H2LJAE, Cortex-M55)"
 maintainer = "sebastien.riou@pqshield.com"
@@ -9,6 +9,13 @@ entry_point = "bsp_cli.py"
 [bsp.hardware]
 flash_bytes = 0x100000               # APROM bank 0; bank 1 is NVM region 0
 ram_bytes = 0x150000                 # SRAM; plus 128 KiB DTCM (the stack) and 64 KiB ITCM
+
+[bsp.mcu]                            # contract 1.5: what the application runs on
+vendor = "Nuvoton"
+part = "M5531H2LJAE"                 # the ordering code, the device pack's name for it (RTE/Device/)
+families = ["NuMicro", "M5531"]      # the NuMicro M5531 series
+checked = false                      # declared only
+reserved = ["CLK", "SYS", "FMC", "SysTick", "DWT", "UART0", "PB12", "PB13", "PH4", "PD6", "PD5", "PI11", "PH1"]
 
 [bsp.build]
 backend = "custom"                   # bsp_cli.py drives the compiler; CROSS_COMPILE selects it
@@ -21,7 +28,7 @@ button = true                        # 0 BTN_0, 1 BTN_1
 cpu_cycle_counter = true             # DWT CYCCNT
 cpu_frequency = true
 cache_clear = true                   # the core's L1 I- and D-caches
-heap_usage = true
+heap_usage = true                    # src/bsp_heap.c, lean-bsp's heap counter
 flash_read = true                    # NVM region 0, APROM bank 1
 flash_erase = true
 flash_write = true
@@ -40,3 +47,4 @@ cpu = "cortex-m55"
 toolchain = "arm-none-eabi"
 cflags = ["-mcpu=cortex-m55", "-mthumb", "-mfpu=auto", "-mfloat-abi=softfp"]  # auto: the M55's whole FPU (double precision too) and Helium
 run_mode = "auto-after-load"
+trustzone = "secure"                 # the image runs from the secure aliases of flash and DTCM

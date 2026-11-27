@@ -188,29 +188,21 @@ void bsp_clear_caches(void) {
     SCB_InvalidateICache();
 }
 
-/* ---- heap usage: how far the heap end moved since the last reset ---- */
+/* ---- the heap: newlib's, grown here; its use is counted by src/bsp_heap.c (contract 1.4) ---- */
 
-extern char end;          /* the heap, from the linker script */
-extern char __HeapLimit;
+extern char end;                    /* the heap's start, from the device pack's linker script */
+extern char __lean_bsp_heap_limit;  /* the end of the SRAM region, from linker/default.ld */
 static char *heap_end;
-static char *heap_mark;
-static char *heap_peak;
 
+/* The heap grows from the end of the data up to the end of the SRAM region: .heap, which reserves
+ * HEAP_SIZE there (bsp_cli.py), is the region's last section. */
 void *_sbrk(int incr) {
     if (heap_end == NULL) heap_end = &end;
     char *const prev = heap_end;
-    if (heap_end + incr > &__HeapLimit) return (void *)-1;
+    if (incr > &__lean_bsp_heap_limit - heap_end) return (void *)-1;
     heap_end += incr;
-    if (heap_end > heap_peak) heap_peak = heap_end;
     return prev;
 }
-
-void bsp_heap_usage_reset(void) {
-    heap_mark = heap_end == NULL ? &end : heap_end;
-    heap_peak = heap_mark;
-}
-
-size_t bsp_heap_usage(void) { return heap_peak > heap_mark ? (size_t)(heap_peak - heap_mark) : 0; }
 
 /* ---- faults ----
  * The pack's HardFault_Handler finds the stacked frame and hands it to ProcessHardFault, then

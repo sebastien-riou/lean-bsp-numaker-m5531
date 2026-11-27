@@ -20,5 +20,14 @@ SECTIONS
   } > NVM0
 }
 
+/* The heap: newlib's _sbrk (src/bsp_numaker_m5531.c) grows it up to the end of the SRAM region, past the
+ * HEAP_SIZE that .heap reserves (bsp_cli.py), .heap being the region's last section. */
+__lean_bsp_heap_limit = ORIGIN(SRAM) + LENGTH(SRAM);
+ASSERT(__HeapLimit <= __lean_bsp_heap_limit, "the heap's reserve does not fit the SRAM region")
+
+/* The stack, at the top of DTCM (STACK_SIZE, bsp_cli.py), must leave the DTCM data below it alone: MSPLIM
+ * stops it at __StackLimit, so an overlap would only show as corrupted data. */
+ASSERT(__dtcm_zi_end__ <= __StackLimit, "the stack (STACK_SIZE) overlaps the data placed in DTCM")
+
 /* __esram_data: the end of what the image loads into flash (its code, then the ITCM and data images) */
 ASSERT(__esram_data <= ORIGIN(NVM0), "the image reaches into NVM region 0: it must fit APROM bank 0, the lower 1 MB of flash")
