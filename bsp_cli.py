@@ -4,8 +4,8 @@
 build compiles the device pack's startup code (RTE/), the StdDriver sources it needs (Library/),
 src/ and the application with the arm-none-eabi toolchain named by CROSS_COMPILE (default:
 arm-none-eabi- from PATH), with the CPU flags of bsp.toml, and links with linker/default.ld (or the
-application's own): the pack's linker script RTE/Device/M5531H2LJAE/M5531.ld plus NVM region 0,
-STACK_SIZE and HEAP_SIZE set below.
+application's own): the pack's linker script with the stack at the start of SRAM
+(linker/M5531-lean-bsp.ld) plus NVM region 0, STACK_SIZE and HEAP_SIZE set below.
 load and run go through lean-hwbridge; the board is the usbman nickname in HWBRIDGE_BOARD, default
 numaker-m5531.
 """
@@ -38,15 +38,15 @@ INCLUDE_DIRS = [
     ROOT / 'CMSIS' / 'Core' / 'Include',
 ]
 DEFINES = []
-STACK_SIZE = 0x1F000  # 124 KiB at the top of DTCM (128 KiB), as crypto-benchmark-m5531 has it; MSPLIM stops it, and
-                      # linker/default.ld checks it leaves the data in DTCM (the 712-byte vector table) alone
+STACK_SIZE = 0x40000  # 256 KiB at the start of SRAM, as crypto-benchmark-m5531 has it; MSPLIM stops it, and
+                      # linker/M5531-lean-bsp.ld checks it stays in SRAM0, which the start-up uses before SRAM1/2 are on
 HEAP_SIZE = 0x10000   # reserved in SRAM; the heap then grows to the end of the SRAM region (linker/default.ld)
 
 
 def build(app: dict, target, bdir: Path) -> dict:
     return gcc.build(app, target, bdir, root=ROOT, sources=SOURCES, include_dirs=INCLUDE_DIRS, defines=DEFINES,
-                     linker_script=ROOT / 'linker' / 'default.ld',  # the pack's M5531.ld plus NVM region 0
-                     link_flags=[f'-L{ROOT / "linker"}', f'-L{DEVICE}',
+                     linker_script=ROOT / 'linker' / 'default.ld',  # the pack's M5531.ld, edited, plus NVM region 0
+                     link_flags=[f'-L{ROOT / "linker"}',
                                  f'-Wl,--defsym=STACK_SIZE={STACK_SIZE:#x}', f'-Wl,--defsym=HEAP_SIZE={HEAP_SIZE:#x}',
                                  *gcc.HEAP_WRAP_FLAGS])
 

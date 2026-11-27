@@ -8,7 +8,7 @@ entry_point = "bsp_cli.py"
 
 [bsp.hardware]
 flash_bytes = 0x100000               # APROM bank 0; bank 1 is NVM region 0
-ram_bytes = 0x150000                 # SRAM; plus 128 KiB DTCM (the stack) and 64 KiB ITCM
+ram_bytes = 0x150000                 # SRAM (the stack at its start); plus 128 KiB DTCM and 64 KiB ITCM
 
 [bsp.mcu]                            # contract 1.5: what the application runs on
 vendor = "Nuvoton"

@@ -57,13 +57,16 @@ There is no generated project: `src/bsp_numaker_m5531.c` brings the board up as
 unchanged from the device pack crypto-benchmark-m5531 uses (NuMicroM55_DFP 3.1.4-rc.3, CMSIS 6.3.0):
 
 - `RTE/`: the startup code, `system_M5531.c` and the linker script `M5531.ld`, as csolution placed
-  them. `bsp_cli.py` sets the stack (124 KiB, at the top of DTCM, where MSPLIM stops it) and the heap's
-  reserve (64 KiB, in SRAM) with `--defsym`; the heap then grows to the end of the SRAM region.
-- `linker/default.ld`: the pack's `M5531.ld`, included unchanged, plus NVM region 0 (`NVM0`, where the
-  sections named `.bsp_nvm0` go, loading nothing there) and the check that the image stays below it, the
-  heap's limit (`__lean_bsp_heap_limit`, the end of the SRAM region) and the check that the stack leaves
-  the data in DTCM alone. An
-  application needing its own script ends it with `INCLUDE default.ld`, as on every board.
+  them. The build uses a copy of `M5531.ld` (below) rather than this one.
+- `linker/M5531-lean-bsp.ld`: the pack's `M5531.ld` with one change, the stack moved from the top of
+  DTCM to the start of SRAM, below the data, as crypto-benchmark-m5531 has it (`diff` against the
+  pack's shows the whole change), and the check that the stack stays in SRAM0, which the start-up code
+  uses before it powers SRAM1 and SRAM2 on. `bsp_cli.py` sets the stack (256 KiB, where MSPLIM stops
+  it) and the heap's reserve (64 KiB) with `--defsym`; the heap then grows to the end of the SRAM region.
+- `linker/default.ld`: `M5531-lean-bsp.ld` plus NVM region 0 (`NVM0`, where the sections named
+  `.bsp_nvm0` go, loading nothing there) and the check that the image stays below it, and the heap's
+  limit (`__lean_bsp_heap_limit`, the end of the SRAM region). An application needing its own script
+  ends it with `INCLUDE default.ld`, as on every board.
 - `src/bsp_nvm.c`: NVM region 0, on the FMC's registers (`Library/.../fmc_reg.h`, `fmc.h`).
 - `Library/`: the device headers, the StdDriver headers, and the four StdDriver sources the BSP uses
   (clk, sys, uart, gpio), with Nuvoton's licence.
