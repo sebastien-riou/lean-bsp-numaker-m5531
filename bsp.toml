@@ -38,5 +38,5 @@ zero_overwrite = false               # not documented for the M5531
 name = "cortex-m55"
 cpu = "cortex-m55"
 toolchain = "arm-none-eabi"
-cflags = ["-mcpu=cortex-m55", "-mthumb", "-mfpu=fpv5-sp-d16", "-mfloat-abi=softfp"]
+cflags = ["-mcpu=cortex-m55", "-mthumb", "-mfpu=auto", "-mfloat-abi=softfp"]  # auto: the M55's whole FPU (double precision too) and Helium
 run_mode = "auto-after-load"
